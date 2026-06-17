@@ -1,0 +1,13 @@
+# 출력물
+output/
+
+# 파이썬
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# 환경변수/비밀키
+.env
+*.key
