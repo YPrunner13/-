@@ -56,9 +56,12 @@ class BlogPost(BaseModel):
     tags: List[str] = Field(description="네이버 태그 8~10개")
 
 
-def generate(topic: str, notes: str) -> dict:
-    """Claude(claude-opus-4-8)로 2026 SEO 규칙에 맞는 블로그 글 구조를 생성한다."""
-    client = anthropic.Anthropic()  # ANTHROPIC_API_KEY 환경변수 자동 사용
+def generate(topic: str, notes: str, api_key: str | None = None) -> dict:
+    """Claude(claude-opus-4-8)로 2026 SEO 규칙에 맞는 블로그 글 구조를 생성한다.
+
+    api_key 를 주면 그 키로, 없으면 환경변수 ANTHROPIC_API_KEY 를 사용한다.
+    """
+    client = anthropic.Anthropic(api_key=api_key) if api_key else anthropic.Anthropic()
 
     user_msg = (
         f"아래 주제로 네이버 블로그 글을 작성해 주세요.\n\n"
