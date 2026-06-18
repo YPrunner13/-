@@ -10,6 +10,8 @@ import html
 import os
 import re
 
+import image_gen
+
 # 직접 찍은 사진을 넣기 전, 미리보기용 임시 이미지를 만들 때 사용
 try:
     from PIL import Image, ImageDraw, ImageFont
@@ -107,8 +109,11 @@ def make_placeholder_image(path: str, caption: str, index: int) -> None:
     img.save(path, "JPEG", quality=85)
 
 
-def render(post: dict, outdir: str) -> str:
-    """글 구조(dict)를 HTML 파일로 저장하고, 사진 임시 이미지를 만든다. 경로 반환."""
+def render(post: dict, outdir: str, use_ai_images: bool = True) -> str:
+    """글 구조(dict)를 HTML 파일로 저장하고 사진을 만든다. 경로 반환.
+
+    use_ai_images=True 면 AI로 실제 사진을 생성하고, 실패하면 임시 이미지로 대체한다.
+    """
     os.makedirs(outdir, exist_ok=True)
     img_dir = os.path.join(outdir, "images")
     os.makedirs(img_dir, exist_ok=True)
@@ -129,8 +134,14 @@ def render(post: dict, outdir: str) -> str:
         slot = sec.get("image")
         if slot:
             fname = f"image_{img_count + 1}.jpg"
-            make_placeholder_image(os.path.join(img_dir, fname),
-                                   slot["caption"], img_count)
+            fpath = os.path.join(img_dir, fname)
+            made_by_ai = False
+            if use_ai_images and slot.get("image_prompt"):
+                print(f"   - 사진 {img_count + 1} 생성 중...")
+                made_by_ai = image_gen.generate_image(
+                    slot["image_prompt"], fpath, seed=img_count + 1)
+            if not made_by_ai:
+                make_placeholder_image(fpath, slot["caption"], img_count)
             parts.append(
                 f'<figure><img src="images/{fname}" alt="{html.escape(slot["caption"])}">'
                 f'<figcaption>{html.escape(slot["caption"])}</figcaption>'
@@ -146,8 +157,9 @@ def render(post: dict, outdir: str) -> str:
                         for t in post["tags"])
         parts.append(f'<div class="tags">{chips}</div>')
 
-    parts.append('<p class="tip">※ 이 임시 사진들을 <b>직접 찍은 원본 사진</b>으로 '
-                 '교체하면 네이버 상위노출 점수가 크게 올라갑니다 (2026년 규칙).</p>')
+    parts.append('<p class="tip">※ AI가 만든 사진은 초안입니다. 가능하면 '
+                 '<b>직접 찍은 원본 사진</b>으로 교체하세요. 2026년 네이버는 직접 촬영한 '
+                 '사진을 더 높게 평가합니다 (상위노출 점수↑).</p>')
 
     body = "\n".join(parts)
     doc = (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>"

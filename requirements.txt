@@ -1,3 +1,5 @@
 anthropic>=0.69.0
 pydantic>=2.0
 pillow>=10.0
+# 아래는 OpenAI 고품질 이미지를 쓸 때만 필요 (무료 방식은 없어도 됨)
+openai>=1.0

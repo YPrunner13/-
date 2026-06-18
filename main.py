@@ -36,6 +36,9 @@ MODEL = "claude-opus-4-8"
 class ImageSlot(BaseModel):
     caption: str = Field(description="사진 아래 들어갈 짧은 설명(캡션)")
     photo_guide: str = Field(description="독자가 직접 어떤 사진을 찍어 넣으면 좋을지 구체적 가이드")
+    image_prompt: str = Field(
+        description="이 사진을 AI로 생성하기 위한 영어 프롬프트. "
+        "photorealistic, natural lighting 같은 사실적 사진 묘사로 작성")
 
 
 class Section(BaseModel):
@@ -87,6 +90,8 @@ def main() -> None:
     parser.add_argument("topic", help="글 주제 또는 키워드")
     parser.add_argument("--notes", default="", help="직접 겪은 경험 메모(있으면 점수 상승)")
     parser.add_argument("--out", default="output", help="결과를 저장할 폴더 (기본: output)")
+    parser.add_argument("--no-ai-images", action="store_true",
+                        help="AI 이미지 생성을 끄고 빈 사진 자리(임시 이미지)만 만든다")
     args = parser.parse_args()
 
     if not os.getenv("ANTHROPIC_API_KEY"):
@@ -97,7 +102,12 @@ def main() -> None:
 
     print(f"✍️  '{args.topic}' 주제로 2026 SEO 규칙에 맞춰 글을 작성 중...")
     post = generate(args.topic, args.notes)
-    path = render(post, args.out)
+
+    use_ai = not args.no_ai_images
+    if use_ai:
+        src = "OpenAI(고품질)" if os.getenv("OPENAI_API_KEY") else "Pollinations(무료)"
+        print(f"🖼️  AI 이미지 생성 중... ({src})")
+    path = render(post, args.out, use_ai_images=use_ai)
 
     print("\n✅ 완성!")
     print(f"   - 제목: {post['title']}")
