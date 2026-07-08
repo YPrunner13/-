@@ -1,6 +1,7 @@
 # 출력물
 output/
 webout/
+novel_projects/
 
 # 파이썬
 __pycache__/
